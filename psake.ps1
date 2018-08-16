@@ -84,12 +84,12 @@ Task Publish -Depends Test {
         Publish-Module -Path $outputModVerDir -NuGetApiKey $env:NuGetApiKey -Repository PSGallery
     }
     else {
-        "`tSkipping deployment: To deploy, ensure that...`n" +
-        "`t`t* You are in a known build system (Current: $ENV:BHBuildSystem)`n" +
-        "`t`t* You are committing to the master branch (Current: $ENV:BHBranchName) `n" +
-        "`t`t* You are not building a Pull Request (Current: $ENV:APPVEYOR_PULL_REQUEST_NUMBER) `n" +
-        "`t`t* Your commit message includes !deploy (Current: $ENV:BHCommitMessage) `n" +
-        "`t`t* Your build image is Visual Studio 2017 (Current: $ENV:APPVEYOR_BUILD_WORKER_IMAGE)" |
+        "    Skipping deployment: To deploy, ensure that...`n" +
+        "        * You are in a known build system (Current: $ENV:BHBuildSystem)`n" +
+        "        * You are committing to the master branch (Current: $ENV:BHBranchName) `n" +
+        "        * You are not building a Pull Request (Current: $ENV:APPVEYOR_PULL_REQUEST_NUMBER) `n" +
+        "        * Your commit message includes !deploy (Current: $ENV:BHCommitMessage) `n" +
+        "        * Your build image is Visual Studio 2017 (Current: $ENV:APPVEYOR_BUILD_WORKER_IMAGE)" |
             Write-Host
     }
 }
