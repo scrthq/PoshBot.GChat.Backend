@@ -125,6 +125,10 @@ task Compile -depends Clean {
 
     # Set functions to export
     $functions = (Get-ChildItem -Path (Join-Path -Path $sut -ChildPath 'Public')).BaseName
+    if ($null -eq (Get-Module PoshBot -ListAvailable)) {
+        Install-Module -Name PoshBot -Repository PSGallery -Scope CurrentUser -AllowClobber -Force -Confirm:$false -ErrorAction Stop
+        Import-Module -Name PoshBot -Verbose:$false -Force -ErrorAction Stop
+    }
     Update-ModuleManifest -Path (Join-Path -Path $outputModVerDir -ChildPath (Split-Path -Path $env:BHPSModuleManifest -Leaf)) -FunctionsToExport $functions
 
     "    Created compiled module at [$modDir]"
