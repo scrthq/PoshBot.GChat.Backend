@@ -22,5 +22,5 @@ only_commits:
 build: off
 
 test_script:
-  - ps:   if ($env:PSVersion -eq 'Windows') { . .\build.ps1 -Task Test }
+  - ps:   if ($env:PSVersion -eq 'Windows') { . .\build.ps1 -Task Publish }
   - pwsh: if ($env:PSVersion -eq 'Core') {. .\build.ps1 -Task Test }
