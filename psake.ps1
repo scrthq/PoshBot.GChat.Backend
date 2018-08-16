@@ -13,7 +13,7 @@ properties {
     $psVersion = $PSVersionTable.PSVersion.Major
 }
 
-task default -depends Test
+task default -depends Publish
 
 task Init {
     "`nSTATUS: Testing with PowerShell $psVersion"
@@ -72,8 +72,26 @@ task Pester -Depends Build {
 } -description 'Run Pester tests'
 
 Task Publish -Depends Test {
-    "    Publishing version [$($manifest.ModuleVersion)] to PSGallery..."
-    Publish-Module -Path $outputModVerDir -NuGetApiKey $env:NuGetApiKey -Repository PSGallery
+    if (
+        $env:BHProjectName -and $env:BHProjectName.Count -eq 1 -and
+        $env:BHBuildSystem -ne 'Unknown' -and
+        $env:BHBranchName -eq "master" -and
+        $env:BHCommitMessage -match '!deploy' -and
+        $env:APPVEYOR_BUILD_WORKER_IMAGE -like '*2017*' -and
+        $env:APPVEYOR_PULL_REQUEST_NUMBER -eq $null 
+    ) {
+        "    Deploying version [$($manifest.ModuleVersion)] to PSGallery..."
+        Publish-Module -Path $outputModVerDir -NuGetApiKey $env:NuGetApiKey -Repository PSGallery
+    }
+    else {
+        "`tSkipping deployment: To deploy, ensure that...`n" +
+        "`t`t* You are in a known build system (Current: $ENV:BHBuildSystem)`n" +
+        "`t`t* You are committing to the master branch (Current: $ENV:BHBranchName) `n" +
+        "`t`t* You are not building a Pull Request (Current: $ENV:APPVEYOR_PULL_REQUEST_NUMBER) `n" +
+        "`t`t* Your commit message includes !deploy (Current: $ENV:BHCommitMessage) `n" +
+        "`t`t* Your build image is Visual Studio 2017 (Current: $ENV:APPVEYOR_BUILD_WORKER_IMAGE)" |
+            Write-Host
+    }
 }
 
 task Clean -depends Init {
