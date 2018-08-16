@@ -4,8 +4,6 @@ if (!(Get-Module PSGSuite)) {
     Import-Module PSGSuite -MinimumVersion "2.13.0" -Force
 }
 
-$Script:_gChatAcked = New-Object System.Collections.ArrayList
-
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingConvertToSecureStringWithPlainText', '', Scope='Class', Target='*')]
 class GChatBackend : Backend {
 
@@ -165,7 +163,6 @@ class GChatBackend : Backend {
 
     # Send a message back to GChat
     [void]SendMessage([Response]$Response) {
-        if (!$Script:_gChatAcked.Contains($Response.OriginalMessage.RawMessage.Id)) {
             if ((Show-PSGSuiteConfig).ConfigName -ne $this.Connection.ConfigName) {
                 Switch-PSGSuiteConfig $this.Connection.ConfigName -Verbose
             }
@@ -237,7 +234,7 @@ class GChatBackend : Backend {
                                     }
                                     Body = $deserBody
                                 }
-                                $gChatResponse = if ($sendTo -like "spaces/*/messages/*") {
+                                if ($sendTo -like "spaces/*/messages/*") {
                                     $this.LogVerbose("Updating parsed message [$sendTo]")
                                     $updateMask = @()
                                     if ($deserializedItem.body.text) {
@@ -296,7 +293,7 @@ class GChatBackend : Backend {
                                 }
                                 $sendParams.MessageSegment = $widgets
                             }
-                            $gChatResponse = if ($sendTo -like "spaces/*/messages/*") {
+                            if ($sendTo -like "spaces/*/messages/*") {
                                 $this.LogVerbose("Updating message [$sendTo]", $sendParams)
                                 Update-GSChatMessage @sendParams -MessageId $sendTo -Verbose:$false
                             }
@@ -355,7 +352,6 @@ class GChatBackend : Backend {
                         $sendTo = $sendToHash['name']
                     }
                 }
-                [string]$sentFrom = $Response.From
                 $i = 0
                 $total = $Response.Text.Count
                 foreach ($item in $Response.Text) {
@@ -446,12 +442,6 @@ class GChatBackend : Backend {
                     }
                 }
             }
-            $this.LogInfo([LogSeverity]::Warning,"Marking message Id $($Response.OriginalMessage.RawMessage.Id) as acknowledged")
-            $Script:_gChatAcked.Add($Response.OriginalMessage.RawMessage.Id) | Out-Null
-        }
-        else {
-            $this.LogInfo([LogSeverity]::Warning,"Skipping message Id $($Response.OriginalMessage.RawMessage.Id) | Message already tracked as complete.")
-        }
     }
 
     # Add a reaction to an existing chat message
