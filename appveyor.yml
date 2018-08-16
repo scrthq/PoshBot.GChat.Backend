@@ -3,8 +3,8 @@ environment:
   NuGetApiKey:
     secure: Ocp1ATd6eZ0eY9+LfZ9Stp9/J1B5eFdBPMdaTRWVa4xh6/NV45ZBYtU5+eemrTWt
   matrix:
-    #- APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
-    #  PSVersion: Core
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+      PSVersion: Core
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       PSVersion: Core
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
