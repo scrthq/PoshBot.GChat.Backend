@@ -21,7 +21,7 @@ task Init {
     Get-Item ENV:BH*
     "`n"
 
-    'Configuration', 'Pester', 'PSScriptAnalyzer', 'PSSlack' | Foreach-Object {
+    'Configuration', 'Pester', 'PSScriptAnalyzer', 'PSSlack', 'PoshBot' | Foreach-Object {
         if (-not (Get-Module -Name $_ -ListAvailable -ErrorAction SilentlyContinue)) {
             Install-Module -Name $_ -Repository PSGallery -Scope CurrentUser -AllowClobber -Confirm:$false -ErrorAction Stop
         }
@@ -61,6 +61,9 @@ task Pester -Depends Build {
     Import-Module -Name $outputModDir -Force -Verbose:$false
     $testResultsXml = Join-Path -Path $outputDir -ChildPath 'testResults.xml'
     $testResults = Invoke-Pester -Path $tests -PassThru -OutputFile $testResultsXml -OutputFormat NUnitXml
+    if ($env:APPVEYOR) {
+        (New-Object 'System.Net.WebClient').UploadFile(([Uri]"https://ci.appveyor.com/api/testresults/nunit/$($env:APPVEYOR_JOB_ID)"),$testResultsXml)
+    }
     if ($testResults.FailedCount -gt 0) {
         $testResults | Format-List
         Write-Error -Message 'One or more Pester tests failed. Build cannot continue!'
