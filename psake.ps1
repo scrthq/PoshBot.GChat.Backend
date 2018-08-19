@@ -22,7 +22,7 @@ task Init {
     "`n"
 
     'Configuration', 'Pester', 'PSScriptAnalyzer', 'PSSlack', 'PSGSuite' | Foreach-Object {
-        Install-Module -Name $_ -Repository PSGallery -Scope CurrentUser -AllowClobber -Force -Confirm:$false -ErrorAction Stop
+        Install-Module -Name $_ -Repository PSGallery -Scope CurrentUser -AllowClobber -Force -Confirm:$false -ErrorAction Stop -SkipPublisherCheck
         Import-Module -Name $_ -Verbose:$false -Force -ErrorAction Stop
     }
 } -description 'Initialize build environment'
