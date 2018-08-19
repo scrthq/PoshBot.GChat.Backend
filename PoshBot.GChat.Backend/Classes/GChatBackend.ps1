@@ -218,7 +218,7 @@ class GChatBackend : Backend {
                             }
                             if ($deserializedItem.token -and $deserializedItem.body) {
                                 $this.LogVerbose("Deserialized Body", $deserializedItem.body)
-                                $this.LogVerbose("Deserialized Token Present", $(if($deserializedItem.token){$true}else{$false}))
+                                $this.LogVerbose("Deserialized Token Present", $($null -ne $deserializedItem.token))
                                 $deserBody = ConvertTo-Json -InputObject $deserializedItem.body -Depth 20
                                 $restParams = @{
                                     ContentType = 'application/json'
@@ -272,9 +272,12 @@ class GChatBackend : Backend {
                                 $fbText = $customResponse.Text
                             }
                             $sendParams.FallbackText = $fbText
+                            if ($customResponse.ThumbnailUrl) {
+                                $widgets += Add-GSChatImage -ImageUrl $customResponse.ThumbnailUrl -LinkImage
+                            }
                             if ($customResponse.Fields) {
                                 $widgets += foreach ($key in $customResponse.Fields.Keys) {
-                                    Add-GSChatKeyValue -TopLabel $key -Content $customResponse.Fields[$key] 
+                                    Add-GSChatKeyValue -TopLabel $key -Content $customResponse.Fields[$key]
                                 }
                             }
                             if ($customResponse.ImageUrl) {
@@ -285,7 +288,8 @@ class GChatBackend : Backend {
                                 if ($customResponse.Title) {
                                     $cardParams.HeaderTitle = $customResponse.Title
                                 }
-                                $sendParams.MessageSegment = $widgets
+                                $card = $widgets | Add-GSChatCard @cardParams
+                                $sendParams.MessageSegment = $card
                             }
                             if ($sendTo -like "spaces/*/messages/*") {
                                 $this.LogVerbose("Updating message [$sendTo]", $sendParams)
