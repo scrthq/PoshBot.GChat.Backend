@@ -194,6 +194,7 @@ class GChatBackend : Backend {
                         $sendParams = @{}
                         $fbText = ''
                         if ($customResponse.CustomData) {
+                            $this.LogVerbose("The response includes CustomData! Parsing...")
                             $deserializedItem = try {
                                 [System.Management.Automation.PSSerializer]::Deserialize($customResponse.CustomData)
                                 $this.LogVerbose("CardResponse::CustomData :: Type [$($customResponse.CustomData.PSObject.TypeNames[0])] :: Succesfully deserialized", $customResponse.CustomData)
@@ -239,7 +240,6 @@ class GChatBackend : Backend {
                                     }
                                     $restParams['Uri'] = ([Uri]"https://chat.googleapis.com/v1/$($sendTo)?updateMask=$($updateMask -join ',')")
                                     $restParams['Method'] = 'Put'
-                                    Invoke-RestMethod @restParams
                                 }
                                 elseif ($sendTo -like "spaces/*/threads/*") {
                                     $this.LogVerbose("Sending parsed response to thread [$sendTo]")
@@ -251,25 +251,35 @@ class GChatBackend : Backend {
                                     $updatedUri = "https://chat.googleapis.com/v1/$($sendTo.Split("/")[0..1] -join "/")/messages"
                                     $restParams['Uri'] = ([Uri]$updatedUri)
                                     $restParams['Method'] = 'Post'
-                                    Invoke-RestMethod @restParams
                                 }
                                 else {
                                     $this.LogVerbose("Sending parsed message to space [$sendTo]")
                                     $restParams['Uri'] = ([Uri]"https://chat.googleapis.com/v1/$($sendTo)/messages")
                                     $restParams['Method'] = 'Post'
-                                    Invoke-RestMethod @restParams
                                 }
+                                Invoke-RestMethod @restParams
                             }
                             else {
                                 $this.LogInfo([LogSeverity]::Warning, "Unable to parse Card's CustomData as a GChat response and token! SKIPPING", $customResponse.CustomData)
                             }
                         }
                         else {
+                            $this.LogVerbose("The response DOES NOT include CustomData! Parsing PoshBot CardResponse to Google Chat Card object...")
                             $widgets = @()
                             if (-not [string]::IsNullOrEmpty($customResponse.Text)) {
                                 $this.LogDebug("Response size [$($customResponse.Text.Length)]")
-                                $sendParams.Text = $customResponse.Text
+                                $formattedText = if ($customResponse.LinkUrl) {
+                                    "<$($customResponse.LinkUrl)|$($customResponse.Text)>"
+                                }
+                                else {
+                                    $customResponse.Text
+                                }
+                                $sendParams.Text = $formattedText
                                 $fbText = $customResponse.Text
+                            }
+                            elseif ($customResponse.LinkUrl) {
+                                $sendParams.Text = "<$($customResponse.LinkUrl)|View Details>"
+                                $fbText = $customResponse.LinkUrl
                             }
                             $sendParams.FallbackText = $fbText
                             if ($customResponse.ThumbnailUrl) {
@@ -293,15 +303,30 @@ class GChatBackend : Backend {
                             }
                             if ($sendTo -like "spaces/*/messages/*") {
                                 $this.LogVerbose("Updating message [$sendTo]", $sendParams)
-                                Update-GSChatMessage @sendParams -MessageId $sendTo -Verbose:$false
+                                try {
+                                    Update-GSChatMessage @sendParams -MessageId $sendTo -Verbose:$false -ErrorAction Stop
+                                }
+                                catch {
+                                    $this.LogInfo([LogSeverity]::Error, $_.Exception.Message, $_)
+                                }
                             }
                             elseif ($sendTo -like "spaces/*/threads/*") {
                                 $this.LogVerbose("Sending response to thread [$sendTo]", $sendParams)
-                                Send-GSChatMessage @sendParams -Thread $sendTo -Parent $($sendTo.Split("/")[0..1] -join "/") -Verbose:$false
+                                try {
+                                    Send-GSChatMessage @sendParams -Thread $sendTo -Parent $($sendTo.Split("/")[0..1] -join "/") -Verbose:$false -ErrorAction Stop
+                                }
+                                catch {
+                                    $this.LogInfo([LogSeverity]::Error, $_.Exception.Message, $_)
+                                }
                             }
                             else {
                                 $this.LogVerbose("Sending message to space [$sendTo]", $sendParams)
-                                Send-GSChatMessage @sendParams -Parent $sendTo -Verbose:$false
+                                try {
+                                    Send-GSChatMessage @sendParams -Parent $sendTo -Verbose:$false -ErrorAction Stop
+                                }
+                                catch {
+                                    $this.LogInfo([LogSeverity]::Error, $_.Exception.Message, $_)
+                                }
                             }
                         }
                         break
