@@ -1,6 +1,9 @@
 # PoshBot.GChat.Backend <!-- omit in toc -->
 
+![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/mhcjffiqbjw6aiga?svg=true)
+
 > _Google Chat backend for PoshBot leveraging a Google Sheet as a message queue with Apps Script as the bot endpoint managing the Sheet contents_
+
 
 * [Prerequisites](#prerequisites)
 * [Setting up the GChat backend for PoshBot](#setting-up-the-gchat-backend-for-poshbot)
