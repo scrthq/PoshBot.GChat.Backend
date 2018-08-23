@@ -37,10 +37,10 @@ function New-PoshBotGChatBackend {
                     $item['ConfigName'] = (Show-PSGSuiteConfig).ConfigName
                 }
                 if (-not $item.SheetName) {
-                    $item['SheetName'] = 'Sheet1'
+                    $item['SheetName'] = 'Queue'
                 }
                 if (-not $item.PollingFrequency) {
-                    $item['PollingFrequency'] = 5
+                    $item['PollingFrequency'] = 1500
                 }
                 Write-Verbose "Creating new GChat backend instance:`n$(([PSCustomObject]$item | Format-List * | Out-String).Trim())"
                 $backend = [GChatBackend]::new($item.ConfigName,$item.SheetId,$item.SheetName,$item.PollingFrequency)
