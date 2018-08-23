@@ -160,8 +160,8 @@ else {
 
 When `plex status` is run from Slack, it returns the following...
 
-![Slack command example](.github/Slack Command Example.png)
+![Slack command example](https://github.com/scrthq/PoshBot.GChat.Backend/blob/master/.github/Slack%20Command%20Example.png?raw=true)
 
 ... and when ran from Google Chat...
 
-![Google Chat command example](.github/GChat Command Example.png)
+![Google Chat command example](https://github.com/scrthq/PoshBot.GChat.Backend/blob/master/.github/GChat%20Command%20Example.png?raw=true)
