@@ -79,7 +79,12 @@ Task Publish -Depends Test {
         $env:APPVEYOR_PULL_REQUEST_NUMBER -eq $null 
     ) {
         "    Deploying version [$($manifest.ModuleVersion)] to PSGallery..."
-        Publish-Module -Path $outputModVerDir -NuGetApiKey $env:NuGetApiKey -Repository PSGallery
+        $Params = @{
+            Path    = $projectRoot
+            Force   = $true
+            Recurse = $false # We keep psdeploy artifacts, avoid deploying those : )
+        }
+        Invoke-PSDeploy @Verbose @Params
     }
     else {
         "    Skipping deployment: To deploy, ensure that...`n" +
