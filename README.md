@@ -158,7 +158,7 @@ else {
 }
 ```
 
-When `plex status` is run from Slack, it returns the following...
+When `plex status` is ran from Slack, it returns the following...
 
 ![Slack command example](https://github.com/scrthq/PoshBot.GChat.Backend/blob/master/.github/Slack%20Command%20Example.png?raw=true)
 
