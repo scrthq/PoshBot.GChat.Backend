@@ -21,7 +21,7 @@ task Init {
     Get-Item ENV:BH*
     "`n"
 
-    'Configuration', 'Pester', 'PSScriptAnalyzer', 'PSSlack', 'PSGSuite' | Foreach-Object {
+    'Configuration', 'Pester', 'PSScriptAnalyzer', 'PSSlack', 'PSGSuite', 'PSDeploy' | Foreach-Object {
         Install-Module -Name $_ -Repository PSGallery -Scope CurrentUser -AllowClobber -Force -Confirm:$false -ErrorAction Stop -SkipPublisherCheck
         Import-Module -Name $_ -Verbose:$false -Force -ErrorAction Stop
     }
