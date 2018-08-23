@@ -8,7 +8,11 @@ param(
 
     [switch]$UpdateModules
 )
-PowerShell -Command {Get-PackageProvider -Name NuGet -ForceBootstrap; Install-Module -Name PowerShellGet -Force;}
+
+if ($Task -eq 'Publish') {
+    $null = PowerShell -Command {Get-PackageProvider -Name NuGet -ForceBootstrap; Install-Module -Name PowerShellGet -Force;}
+}
+
 function Resolve-Module {
     [Cmdletbinding()]
     param (

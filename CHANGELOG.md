@@ -10,3 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Base classes and helper functions
+
+## [0.2.1] Updated manifest and build script
+
+- Manifest updated to include FunctionsToExport list
+- Build script updated to only update PowerShellGet during the Publish task

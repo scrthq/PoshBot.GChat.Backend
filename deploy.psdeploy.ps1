@@ -33,7 +33,7 @@ if (
     $outputModDir = Join-Path -Path $outputDir -ChildPath $env:BHProjectName
     $manifest = Import-PowerShellDataFile -Path $env:BHPSModuleManifest
     $outputModVerDir = Join-Path -Path $outputModDir -ChildPath $manifest.ModuleVersion
-    Import-Module "$($outputModVerDir)\$($env:BHProjectName).psd1" -Force -Verbose
+    Import-Module "$($outputModVerDir)\$($env:BHProjectName).psd1" -Force
 
     Deploy Module {
         By PSGalleryModule {
