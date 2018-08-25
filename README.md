@@ -13,7 +13,8 @@
 * [Pros and cons with using Google Chat with PoshBot versus Slack](#pros-and-cons-with-using-google-chat-with-poshbot-versus-slack)
     * [API Communication](#api-communication)
     * [Reactions](#reactions)
-    * [Cards](#cards)
+    * [Card Formatting](#card-formatting)
+    * [Interactive Cards](#interactive-cards)
 
 ## Prerequisites
 
@@ -134,7 +135,7 @@ This means that Google only sends events to the Bot endpoint if...
 
 Google Chat currently does not support adding reactions to messages, nor does it emit events when reactions are added. Due to this caveat, PoshBot is unable to signal to the sender that it is currently processing the message (indicated by a gear in Slack), the message was processed successfully (green check mark), or any others (i.e. warnings).
 
-### Cards
+### Card Formatting
 
 Google Chat does not support certain card widgets that Slack does, i.e. Thumbnail images. There is logic in place in the GChat backend to provide a best-effort translation, but results may vary.
 
@@ -168,3 +169,9 @@ When `plex status` is ran from Slack, it returns the following...
 ... and when ran from Google Chat...
 
 ![Google Chat command example](https://github.com/scrthq/PoshBot.GChat.Backend/blob/master/.github/GChat%20Command%20Example.png?raw=true)
+
+### Interactive Cards
+
+Slack's implementation of interactive cards necessitates an API endpoint to send Card Clicked events. Because of this, the Slack backend and its use of the RTM API prevents interactive cards from being usable. Google Chat, however, sends every event over to your desired endpoint (Sheets MQ in the case of this backend implementation).
+
+To help ease development around this, I've created a sample PoshBot plugin for anyone to fork and customize to their liking. Check it out here: [PoshBot.GChat.EventHandler](https://github.com/scrthq/PoshBot.GChat.EventHandler)
