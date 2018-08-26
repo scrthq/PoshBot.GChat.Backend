@@ -8,7 +8,7 @@ class GChatBackend : Backend {
         'REMOVED_FROM_SPACE'
         'ADDED_TO_SPACE'
         'CARD_CLICKED'
-    )
+    ) 
 
     [int]$MaxMessageLength = 4000
 
