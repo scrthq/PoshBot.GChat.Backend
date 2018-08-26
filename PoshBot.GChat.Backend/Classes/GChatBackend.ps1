@@ -87,7 +87,7 @@ class GChatBackend : Backend {
                                 }
                             }
                             'CARD_CLICKED' {
-                                $msg.Type = [MessageType]::PresenceChange # Hack for now since Google Chat doesn't support presence change and CardClicked is not currently available as a message type. This maps to CARD_CLICKED events sent from Google Chat only!
+                                $msg.Type = [MessageType]::PresenceChange # Hack for now since Google Chat doesn't support presence change and CardClicked is not currently available as a message type in PoshBot. This maps to CARD_CLICKED events sent from Google Chat only!
                                 $msg.From = $gChatEvent.user.name
                                 $msg.FromName = $gChatEvent.user.displayName
                                 $msg.To = $gChatEvent.message.name
