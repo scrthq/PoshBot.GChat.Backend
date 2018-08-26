@@ -62,15 +62,15 @@ class GChatBackend : Backend {
                         switch ($gChatEvent.type) {
                             'ADDED_TO_SPACE' {
                                 $msg.Type = [MessageType]::Message
-                                $msg.SubType = [MessageSubtype]::ChannelJoined
+                                $msg.SubType = [MessageSubType]::ChannelJoined
                                 $msg.To = $gChatEvent.space.name
                                 $msg.ToName = $gChatEvent.space.displayName
-                                $msg.Text = "$($gChatEvent.type) OriginalMessage: $($gChatMessage.Event -join '')"
+                                $msg.Text = ($gChatMessage.Event -join '')
                             }
                             'REMOVED_FROM_SPACE' {
                                 $msg.Type = [MessageType]::Message
-                                $msg.SubType = [MessageSubtype]::ChannelLeft
-                                $msg.Text = "$($gChatEvent.type) OriginalMessage: $($gChatMessage.Event -join '')"
+                                $msg.SubType = [MessageSubType]::ChannelLeft
+                                $msg.Text = ($gChatMessage.Event -join '')
                             }
                             'MESSAGE' {
                                 $msg.Type = [MessageType]::Message
@@ -87,12 +87,12 @@ class GChatBackend : Backend {
                                 }
                             }
                             'CARD_CLICKED' {
-                                $msg.Type = [MessageType]::Message
+                                $msg.Type = [MessageType]::PresenceChange # Hack for now since Google Chat doesn't support presence change and CardClicked is not currently available as a message type. This maps to CARD_CLICKED events sent from Google Chat only!
                                 $msg.From = $gChatEvent.user.name
                                 $msg.FromName = $gChatEvent.user.displayName
                                 $msg.To = $gChatEvent.message.name
                                 $msg.ToName = $gChatEvent.message.space.displayName
-                                $msg.Text = "CARD_CLICKED ActionMethodName: $($gChatEvent.action.actionMethodName) ActionMethodParams: $(if ($gChatEvent.action.parameters) {"$($gChatEvent.action.parameters | ConvertTo-Json -Depth 5 -Compress)"}else{'{}'}) OriginalMessage: $($gChatMessage.Event -join '')"
+                                $msg.Text = ($gChatMessage.Event -join '')
                                 $msg.Id = $gChatEvent.message.name
                                 if ($gChatEvent.space.type -eq 'DM') {
                                     $this.LogDebug("CARD_CLICKED event is a DM!")
@@ -197,16 +197,16 @@ class GChatBackend : Backend {
                             $this.LogVerbose("The response includes CustomData! Parsing...")
                             $deserializedItem = try {
                                 [System.Management.Automation.PSSerializer]::Deserialize($customResponse.CustomData)
-                                $this.LogVerbose("CardResponse::CustomData :: Type [$($customResponse.CustomData.PSObject.TypeNames[0])] :: Succesfully deserialized", $customResponse.CustomData)
+                                $this.LogVerbose("CardResponse::CustomData :: Type [$($customResponse.CustomData.PSObject.TypeNames[0])] :: Succesfully deserialized")
                             }
                             catch {
                                 try {
                                     if ($customResponse.CustomData -is [System.Collections.Hashtable] -or $customResponse.CustomData -is [System.Management.Automation.PSCustomObject]) {
-                                        $this.LogVerbose("CardResponse::CustomData :: Type [$($customResponse.CustomData.PSObject.TypeNames[0])] :: Item is already correct type", $customResponse.CustomData)
+                                        $this.LogVerbose("CardResponse::CustomData :: Type [$($customResponse.CustomData.PSObject.TypeNames[0])] :: Item is already correct type")
                                         $customResponse.CustomData
                                     }
                                     elseif ($jsonConvert = ConvertFrom-Json $customResponse.CustomData) {
-                                        $this.LogVerbose("CardResponse::CustomData :: Type [$($customResponse.CustomData.PSObject.TypeNames[0])] :: Item is a JSON string, returning converted object", $customResponse.CustomData)
+                                        $this.LogVerbose("CardResponse::CustomData :: Type [$($customResponse.CustomData.PSObject.TypeNames[0])] :: Item is a JSON string, returning converted object")
                                         $jsonConvert
                                     }
                                     else {
@@ -266,6 +266,7 @@ class GChatBackend : Backend {
                         else {
                             $this.LogVerbose("The response DOES NOT include CustomData! Parsing PoshBot CardResponse to Google Chat Card object...")
                             $widgets = @()
+                            $cardParams = @{}
                             if (-not [string]::IsNullOrEmpty($customResponse.Text)) {
                                 $this.LogDebug("Response size [$($customResponse.Text.Length)]")
                                 $formattedText = if ($customResponse.LinkUrl) {
@@ -282,8 +283,12 @@ class GChatBackend : Backend {
                                 $fbText = $customResponse.LinkUrl
                             }
                             $sendParams.FallbackText = $fbText
+                            if ($customResponse.Title) {
+                                $cardParams.HeaderTitle = $customResponse.Title
+                            }
                             if ($customResponse.ThumbnailUrl) {
-                                $widgets += Add-GSChatImage -ImageUrl $customResponse.ThumbnailUrl -LinkImage
+                                $cardParams.HeaderImageUrl = $customResponse.ThumbnailUrl
+                                $cardParams.HeaderImageStyle = 'AVATAR'
                             }
                             if ($customResponse.Fields) {
                                 $widgets += foreach ($key in $customResponse.Fields.Keys) {
@@ -294,11 +299,10 @@ class GChatBackend : Backend {
                                 $widgets += Add-GSChatImage -ImageUrl $customResponse.ImageUrl -LinkImage
                             }
                             if ($widgets) {
-                                $cardParams = @{}
-                                if ($customResponse.Title) {
-                                    $cardParams.HeaderTitle = $customResponse.Title
-                                }
-                                $card = $widgets | Add-GSChatCard @cardParams
+                                $cardParams.MessageSegment = $widgets
+                            }
+                            if ($cardParams.Keys.Count) {
+                                $card = Add-GSChatCard @cardParams
                                 $sendParams.MessageSegment = $card
                             }
                             if ($sendTo -like "spaces/*/messages/*") {
@@ -381,16 +385,16 @@ class GChatBackend : Backend {
                     $i++
                     $deserializedItem = try {
                         [System.Management.Automation.PSSerializer]::Deserialize($item)
-                        $this.LogVerbose("Text Item [$i/$total] :: Type [$($item.PSObject.TypeNames[0])] :: Succesfully deserialized", $item)
+                        $this.LogVerbose("Text Item [$i/$total] :: Type [$($item.PSObject.TypeNames[0])] :: Succesfully deserialized")
                     }
                     catch {
                         try {
                             if ($item -is [System.Collections.Hashtable] -or $item -is [System.Management.Automation.PSCustomObject]) {
-                                $this.LogVerbose("Text Item [$i/$total] :: Type [$($item.PSObject.TypeNames[0])] :: Item is already correct type", $item)
+                                $this.LogVerbose("Text Item [$i/$total] :: Type [$($item.PSObject.TypeNames[0])] :: Item is already correct type")
                                 $item
                             }
                             elseif ($jsonConvert = ConvertFrom-Json $item) {
-                                $this.LogVerbose("Text Item [$i/$total] :: Type [$($item.PSObject.TypeNames[0])] :: Item is a JSON string, returning converted object", $item)
+                                $this.LogVerbose("Text Item [$i/$total] :: Type [$($item.PSObject.TypeNames[0])] :: Item is a JSON string, returning converted object")
                                 $jsonConvert
                             }
                             else {
@@ -403,7 +407,7 @@ class GChatBackend : Backend {
                     }
                     if ($deserializedItem.token -and $deserializedItem.body) {
                         $this.LogVerbose("Deserialized Body", $deserializedItem.body)
-                        $this.LogVerbose("Deserialized Token Present", $(if($deserializedItem.token){$true}else{$false}))
+                        $this.LogVerbose("Deserialized Token Present", $($null -ne $deserializedItem.token))
                         $deserBody = ConvertTo-Json -InputObject $deserializedItem.body -Depth 20
                         $restParams = @{
                             ContentType = 'application/json'

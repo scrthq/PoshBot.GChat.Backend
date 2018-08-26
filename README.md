@@ -137,7 +137,7 @@ Google Chat currently does not support adding reactions to messages, nor does it
 
 ### Card Formatting
 
-Google Chat does not support certain card widgets that Slack does, i.e. Thumbnail images. There is logic in place in the GChat backend to provide a best-effort translation, but results may vary.
+Google Chat does not support certain card widgets that Slack does and supports others Slack does not. There is logic in place in the GChat Backend to provide a best-effort translation, but results may vary.
 
 To assist with developing PoshBot plugins compatible with multiple backends, the module `PoshBot.GChat.Backend` comes with a helper function `New-PoshBotGChatCardResponse`. This function includes the same parameters as `New-PoshBotCardResponse`, while also supporting pipeline input of Google Chat widgets the same as you would use with `Send-GSChatMessage`.
 
@@ -174,4 +174,83 @@ When `plex status` is ran from Slack, it returns the following...
 
 Slack's implementation of interactive cards necessitates an API endpoint to send Card Clicked events. Because of this, the Slack backend and its use of the RTM API prevents interactive cards from being usable. Google Chat, however, sends every event over to your desired endpoint (Sheets MQ in the case of this backend implementation).
 
-To help ease development around this, I've created a sample PoshBot plugin for anyone to fork and customize to their liking. Check it out here: [PoshBot.GChat.EventHandler](https://github.com/scrthq/PoshBot.GChat.EventHandler)
+To help ease development around this, I've created a sample PoshBot plugin for anyone to fork and customize to their liking. Check it out here: [PoshBot.GChat.EventHandler](https://github.com/scrthq/PoshBot.GChat.EventHandler). You can also see the following for example Event Handlers with the minimum configuration:
+
+```powershell
+function AddedToSpace {
+    [PoshBot.BotCommand(
+        HideFromHelp = $true,
+        Command = $false,
+        TriggerType = 'Event',
+        MessageType = 'Message',
+        MessageSubType = 'ChannelJoined'
+    )]
+    [CmdletBinding()]
+    param(
+        [parameter(Position = 0,ValueFromRemainingArguments = $true)]
+        [string[]]$Arguments
+    )
+    $originalMessage = ConvertFrom-Json $Global:PoshBotContext.ParsedCommand.CommandString
+    Import-Module PSGSuite -MinimumVersion "2.13.0"
+    Import-Module PoshBot.GChat.Backend -MinimumVersion '0.2.2'
+    $text = switch ($originalMessage.space.type) {
+        DM {
+            "Thanks for adding me to your DMs, <$($originalMessage.user.name)>!"
+        }
+        Room {
+            "Thanks for adding me to the room, <$($originalMessage.user.name)>!"
+        }
+    }
+    New-PoshBotTextResponse -Text $text
+}
+function RemovedFromSpace {
+    [PoshBot.BotCommand(
+        HideFromHelp = $true,
+        Command = $false,
+        TriggerType = 'Event',
+        MessageType = 'Message',
+        MessageSubType = 'ChannelLeft'
+    )]
+    [CmdletBinding()]
+    param(
+        [parameter(Position = 0,ValueFromRemainingArguments = $true)]
+        [string[]]$Arguments
+    )
+    $originalMessage = ConvertFrom-Json $Global:PoshBotContext.ParsedCommand.CommandString
+    Import-Module PSGSuite -MinimumVersion "2.13.0"
+    Import-Module PoshBot.GChat.Backend -MinimumVersion '0.2.2'
+    
+    # Empty for now since the bot is unable to send a message to a space it was removed from.
+    # Maybe add logging specific to the implementation?
+}
+
+function CardClicked {
+    [PoshBot.BotCommand(
+        HideFromHelp = $true,
+        Command = $false,
+        TriggerType = 'Event',
+        MessageType = 'PresenceChange' # Hack for now since Google Chat doesn't support presence change and CardClicked is not currently available as a message type in PoshBot. This maps to CARD_CLICKED events sent from Google Chat only!
+    )]
+    [CmdletBinding()]
+    param(
+        [parameter(Position = 0,ValueFromRemainingArguments = $true)]
+        [string[]]$Arguments
+    )
+    $originalMessage = ConvertFrom-Json $Global:PoshBotContext.ParsedCommand.CommandString
+    $actionMethod = $originalMessage.action.actionMethodName
+    $actionParameters = $originalMessage.action.parameters
+    Import-Module PSGSuite -MinimumVersion "2.13.0"
+    Import-Module PoshBot.GChat.Backend -MinimumVersion '0.2.2'
+    switch ($actionMethod) {
+        launchNuke {
+            Add-GSChatKeyValue -TopLabel "Keys Decrypted" -Content $actionParameters.value | Add-GSChatCardSection | Add-GSChatImage -ImageUrl "https://media.giphy.com/media/iyKm1yNjeSebe/giphy.gif" -LinkImage | Add-GSChatCardSection -SectionHeader "BOOM" | Add-GSChatCard | New-PoshBotGChatCardResponse -Text "The nukes have been launched! Original text: $($originalMessage.message.text)"
+        }
+        unleashHounds {
+            Add-GSChatImage -ImageUrl "https://media.giphy.com/media/TVCqfX7rLyMuY/giphy.gif" -LinkImage | Add-GSChatCardSection -SectionHeader "GRRRRRR" | Add-GSChatCard | New-PoshBotGChatCardResponse -Text "The hounds have been unleashed! Original text: $($originalMessage.message.text)"
+        }
+        default {
+            New-PoshBotGChatCardResponse -Text "There is no action for the action method requested: [$actionMethod]"
+        }
+    }
+}
+```
