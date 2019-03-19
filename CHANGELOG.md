@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.2.3] Fixed missing PSM1
+
+### Resolved
+
+- PSM1 missing from current version in PSGallery due to publishing the working directory of the repo, not the Build Output directory containing the compiled module.
+
 ## [0.2.2] Updated Message SubType
 
 ### Updates
