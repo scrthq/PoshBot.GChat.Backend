@@ -76,15 +76,10 @@ Task Publish -Depends Test {
         $env:BHBranchName -eq "master" -and
         $env:BHCommitMessage -match '!deploy' -and
         $env:APPVEYOR_BUILD_WORKER_IMAGE -like '*2017*' -and
-        $env:APPVEYOR_PULL_REQUEST_NUMBER -eq $null 
+        $env:APPVEYOR_PULL_REQUEST_NUMBER -eq $null
     ) {
         "    Deploying version [$($manifest.ModuleVersion)] to PSGallery..."
-        $Params = @{
-            Path    = $projectRoot
-            Force   = $true
-            Recurse = $false # We keep psdeploy artifacts, avoid deploying those : )
-        }
-        Invoke-PSDeploy @Verbose @Params
+        Publish-Module -Path $outputModVerDir -NuGetApiKey $env:NugetApiKey -Repository PSGallery
     }
     else {
         "    Skipping deployment: To deploy, ensure that...`n" +
